@@ -1,5 +1,5 @@
 # Add the name of the image for this command to work!
-CONTAINER_NAME := ??
+CONTAINER_NAME := arm64v8/ros:humble
 
 build: 
 	docker build . -t ${IMAGE_NAME}
@@ -14,9 +14,9 @@ novnc:
 
 bash:
 	docker run -it --name ${NAME} \
-	--net=ros \
+	--net=host \
 	--env="DISPLAY=novnc:0.0" \
-	-v ./:/CPE416/:Z \
+	-v /Users/camwolff/Development/CPE416/:/CPE416/:Z \
 	${CONTAINER_NAME} \
 
 arch:
