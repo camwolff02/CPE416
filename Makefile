@@ -14,7 +14,7 @@ novnc:
 
 bash:
 	docker run -it --name ${NAME} \
-	--net=host \
+	--net=ros \
 	--env="DISPLAY=novnc:0.0" \
 	-v /Users/camwolff/Development/CPE416/:/CPE416/:Z \
 	${CONTAINER_NAME} \

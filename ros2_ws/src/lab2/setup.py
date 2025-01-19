@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'lab1'
+package_name = 'lab2'
 
 setup(
     name=package_name,
@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'talker = lab1.talker_squared:main',
-            'listener = lab1.listener_squared:main',
+            'draw_square = lab2.draw_square:main',
+            'draw_spiral = lab2.draw_spiral:main',
         ],
     },
 )
