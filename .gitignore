@@ -1,6 +1,7 @@
 build/
 install/
 log/
+.vscode/
 
 # PYTHON GITIGNORE
 # Byte-compiled / optimized / DLL files
