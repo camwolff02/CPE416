@@ -1,57 +1,97 @@
 import rclpy
 from rclpy.node import Node
+from geometry_msgs.msg import Twist, Pose2D
+from turtlesim.msg import Pose
 
 import math
 
 """
-    We're going to implement an open loop controller/FSM to have the turtlebot
-    draw a square on the screen. Below I have commented parts of the code that
-    you need to fill in to make the logic complete.
+Proportional controller to command Turtlebot to a position
 """
 
-# We have to use the geometry_msgs/msg/Twist to control robots
-# Write in here what the correct import should be
-from geometry_msgs.msg import Twist, Pose2D
-from turtlesim_msgs.msg import Pose
 
-
-class DrawSpiral(Node):
-
+class MoveToPos(Node):
     def __init__(self):
-        # Init the node with a name (this is the name that appears when running)
-        # 'ros2 node list'
-        super().__init__('draw_spiral')
+        node_name = "move_to_point"
+        super().__init__(node_name)
 
-        self._publish_cmd_vel = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
-        self._subscribe_pose = self.create_subscription(Pose, '/turtle1/pose')
+        # Initialize Proportional (P) control constants
+        self.k_orientation = 0.75
+        self.k_velocity = 0.15
+
+        self.threshold = 0.2  # stopping threshold [m, rad]
+
+        # Initialize target pose from parameters
+        self.declare_parameter("x", 1.0)
+        self.declare_parameter("y", 1.0)
+        self.declare_parameter("theta", math.pi)
+        self._desired_pose = Pose2D()
+        self._update_desired_pose()
+
+        # Initialize variables to hold state of node
         self._cmd_vel = Twist()
+        self._pose = Pose()
+        self._has_pose = False
 
-        self.declare_parameter('target_pos', rclpy.Parameter.Type.POSE2D)
+        # Subscribe to the turtle's position, publish to the turtle's velocity
+        self.create_subscription(Pose, "/turtle1/pose", self._get_pose, 10)
+        self._timer_period = 1  # [seconds]
+        self.create_timer(self._timer_period, self._move)
+        self._publish_cmd_vel = self.create_publisher(Twist, "/turtle1/cmd_vel", 10)
 
-        timer_period = 1.0  # [seconds]
-        self._timer = self.create_timer(timer_period, self.timer_callback)
+    def angular_controller(self, desired_angle: float) -> float:
+        return self.k_orientation * (desired_angle - self._pose.theta)
 
+    def linear_controller(self) -> float:
+        return self.k_velocity * math.sqrt(
+            (self._desired_pose.x - self._pose.x) ** 2
+            + (self._desired_pose.y - self._pose.y) ** 2
+        )
 
+    def _update_desired_pose(self) -> None:
+        self._desired_pose.x = (
+            self.get_parameter("x").get_parameter_value().double_value
+        )
+        self._desired_pose.y = (
+            self.get_parameter("y").get_parameter_value().double_value
+        )
+        self._desired_pose.theta = (
+            self.get_parameter("theta").get_parameter_value().double_value
+        )
 
-        # Initialize the robot pointing at the target position
+    def _get_pose(self, pose_msg: Pose) -> None:
+        self._pose = pose_msg
+        self._has_pose = True
+        self._update_desired_pose()
 
+    def _move(self) -> None:
+        if not self._has_pose:
+            return  # Only run if we have gotten the turtle's position
 
-    # Callback for the events
-    def timer_callback(self):
+        self._cmd_vel.angular.z = 0.0
+        self._cmd_vel.linear.x = 0.0
 
-        # Call publisher here
-        self.get_logger().info("Robot is Still Turning!")
-        if self.turn_msg.angular.z > 0.5:
-            self.turn_msg.angular.z -= .5
+        x_error = self._desired_pose.x - self._pose.x
+        y_error = self._desired_pose.y - self._pose.y
 
-        self.publisher_.publish(self.cmd_vel)
+        if abs(x_error) > self.threshold or abs(y_error) > self.threshold:
+            desired_angle = math.atan2(y_error, x_error)
+            self._cmd_vel.angular.z = self.angular_controller(desired_angle)
+            self._cmd_vel.linear.x = self.linear_controller()
+        elif abs(self._desired_pose.theta - self._pose.theta) > self.threshold:
+            self._cmd_vel.angular.z = self.angular_controller(self._desired_pose.theta)
+
+        self.get_logger().info(
+            f"x: ({self._pose.x:.2f}, y: {self._pose.y:.2f}, theta: {self._pose.theta:.2f})"
+        )
+        self._publish_cmd_vel.publish(self._cmd_vel)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    draw_square = DrawSpiral()
-    rclpy.spin_once(draw_square)
-    draw_square.destroy_node()
+    node = MoveToPos()
+    rclpy.spin(node)
+    node.destroy_node()
     rclpy.shutdown()
 
 
