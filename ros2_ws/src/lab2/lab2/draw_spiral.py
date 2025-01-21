@@ -32,15 +32,14 @@ class DrawSpiral(Node):
 
         self.turn_msg = Twist()
         self.turn_msg.linear.x = timer_period  # [m]
-        self.turn_msg.angular.z = 10.  # [rad/s]
+        self.turn_msg.angular.z = 10.0  # [rad/s]
 
     # Callback for the events
     def timer_callback(self):
         # Call publisher here
         self.get_logger().info("Robot is Still Turning!")
         self.publisher_.publish(self.turn_msg)
-        if self.turn_msg.angular.z > 0.5:
-            self.turn_msg.angular.z -= .5
+        self.turn_msg.linear.x += 0.5
 
 
 def main(args=None):

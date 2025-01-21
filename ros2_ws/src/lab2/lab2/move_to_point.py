@@ -37,7 +37,10 @@ class MoveToPos(Node):
         self.create_subscription(Pose, "/turtle1/pose", self._get_pose, 10)
         self._timer_period = 1  # [seconds]
         self.create_timer(self._timer_period, self._move)
-        self._publish_cmd_vel = self.create_publisher(Twist, "/turtle1/cmd_vel", 10)
+
+        self.declare_parameter("cmd_vel_topic", "/turtle1/cmd_vel")
+        topic = self.get_parameter("cmd_vel_topic").get_parameter_value().string_value
+        self._publish_cmd_vel = self.create_publisher(Twist, topic, 10)
 
     def angular_controller(self, desired_angle: float) -> float:
         return self.k_orientation * (desired_angle - self._pose.theta)

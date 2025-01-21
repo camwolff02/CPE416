@@ -2,6 +2,7 @@ build/
 install/
 log/
 .vscode/
+.DS_Store
 
 # PYTHON GITIGNORE
 # Byte-compiled / optimized / DLL files
