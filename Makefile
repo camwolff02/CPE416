@@ -1,5 +1,6 @@
 # Add the name of the image for this command to work!
-CONTAINER_NAME := arm64v8/ros:humble
+# CONTAINER_NAME := arm64v8/ros:humble
+CONTAINER_NAME := ambulantelab/cpe416:lab4-arm
 
 build: 
 	docker build . -t ${IMAGE_NAME}
