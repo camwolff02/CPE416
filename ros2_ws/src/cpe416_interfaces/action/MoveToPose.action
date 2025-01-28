@@ -1,0 +1,5 @@
+geometry_msgs/Pose2D goal
+---
+geometry_msgs/Pose2D current
+---
+geometry_msgs/Pose2D destination

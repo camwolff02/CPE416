@@ -1,6 +1,9 @@
 # Add the name of the image for this command to work!
-# CONTAINER_NAME := arm64v8/ros:humble
-CONTAINER_NAME := ambulantelab/cpe416:lab4-arm
+ifeq ($(shell uname -p), x86_64)
+	CONTAINER_NAME := ambulantelab/cpe416:lab4-x86
+else
+	CONTAINER_NAME := ambulantelab/cpe416:lab4-arm
+endif
 
 build: 
 	docker build . -t ${IMAGE_NAME}
@@ -17,7 +20,7 @@ bash:
 	docker run -it --name ${NAME} \
 	--net=ros \
 	--env="DISPLAY=novnc:0.0" \
-	-v /Users/camwolff/Development/CPE416/:/CPE416/:Z \
+	-v ~/Development/CPE416/:/CPE416/:Z \
 	${CONTAINER_NAME} \
 
 arch:
