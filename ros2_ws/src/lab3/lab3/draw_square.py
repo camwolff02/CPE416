@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import math
 import rclpy
 from rclpy.node import Node
@@ -10,7 +11,7 @@ from cpe416_interfaces.action import MoveToPose
 class DrawSquare(Node):
     def __init__(self):
         super().__init__("draw_square")
-        self._action_client = ActionClient(self, MoveToPose, 'move_to_pose')
+        self._action_client = ActionClient(self, MoveToPose, "move_to_pose")
         self.goal_msg_ = MoveToPose.Goal()
 
     def send_goal(self, goal: Pose2D):
@@ -23,17 +24,17 @@ class DrawSquare(Node):
     def goal_response_callback(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().info('Goal rejected :(')
+            self.get_logger().info("Goal rejected :(")
             return
 
-        self.get_logger().info('Goal accepted :) driving to point')
+        self.get_logger().info("Goal accepted :) driving to point")
 
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
     def get_result_callback(self, future):
         result = future.result().result
-        self.get_logger().info('Result: {0}'.format(result.sequence))
+        self.get_logger().info("Result: {0}".format(result.sequence))
         rclpy.shutdown()
 
 
