@@ -24,22 +24,9 @@ def generate_launch_description():
                     ]
                 )
             ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    [
-                        PathJoinSubstitution(
-                            [
-                                FindPackageShare("lab3"),
-                                "launch",
-                                "turn_to_angle.launch.py",
-                            ]
-                        )
-                    ]
-                )
-            ),
             Node(
                 package="lab3",
-                executable="draw_square",
+                executable="draw_square.py",
             ),
         ]
     )

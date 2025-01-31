@@ -18,7 +18,7 @@ def generate_launch_description():
                             [
                                 FindPackageShare("lab3"),
                                 "launch",
-                                "move_to_pose.launch.py",
+                                "draw_square.launch.py",
                             ]
                         )
                     ]
@@ -29,17 +29,13 @@ def generate_launch_description():
                     [
                         PathJoinSubstitution(
                             [
-                                FindPackageShare("lab3"),
+                                FindPackageShare("ros_gz_example_bringup"),
                                 "launch",
-                                "turn_to_angle.launch.py",
+                                "diff_drive.launch.py",
                             ]
                         )
                     ]
                 )
-            ),
-            Node(
-                package="lab3",
-                executable="draw_square",
             ),
         ]
     )

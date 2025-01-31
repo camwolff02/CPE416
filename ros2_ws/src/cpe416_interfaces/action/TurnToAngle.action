@@ -1,5 +1,5 @@
 # Request
-geometry_msgs/Pose2D goal
+float32 goal
 ---
 # Result
 geometry_msgs/Pose destination

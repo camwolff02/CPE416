@@ -66,7 +66,16 @@
               <radius>0.3</radius>
             </sphere>
           </geometry>
-        </collision>
+          <!-- Remove friction from front wheels (omni wheel simuation)-->
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.01</mu>
+                <mu2>0.01</mu2>
+              </ode>
+            </friction>
+          </surface>
+          </collision>
       </link>
 
       <link name='right_wheel_front'>
@@ -100,6 +109,15 @@
               <radius>0.3</radius>
             </sphere>
           </geometry>
+          <!-- Remove friction from front wheels (omni wheel simuation)-->
+          <surface>
+            <friction>
+              <ode>
+                <mu>0.01</mu>
+                <mu2>0.01</mu2>
+              </ode>
+            </friction>
+          </surface>
         </collision>
       </link>
 

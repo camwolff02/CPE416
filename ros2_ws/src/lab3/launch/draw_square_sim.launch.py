@@ -16,9 +16,9 @@ def generate_launch_description():
                     [
                         PathJoinSubstitution(
                             [
-                                FindPackageShare("lab3"),
+                                FindPackageShare("ros_gz_example_bringup"),
                                 "launch",
-                                "draw_square.launch.py",
+                                "diff_drive.launch.py",
                             ]
                         )
                     ]
@@ -29,9 +29,9 @@ def generate_launch_description():
                     [
                         PathJoinSubstitution(
                             [
-                                FindPackageShare("ros_gz_example_bringup"),
+                                FindPackageShare("lab3"),
                                 "launch",
-                                "diff_drive.launch.py",
+                                "draw_square.launch.py",
                             ]
                         )
                     ]

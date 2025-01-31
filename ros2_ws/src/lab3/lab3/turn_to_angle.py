@@ -1,52 +1,47 @@
 #!/usr/bin/env python3
-import math
 import time
 import rclpy
 from rclpy.action import ActionServer
 import rclpy.action
 from rclpy.node import Node
 import rclpy.executors
-from tf_transformations import quaternion_from_euler
+from tf_transformations import (
+    quaternion_from_euler,
+    quaternion_conjugate,
+    quaternion_multiply,
+    euler_from_quaternion,
+)
 
 from geometry_msgs.msg import Twist, Pose, Quaternion
 from nav_msgs.msg import Odometry
-from cpe416_interfaces.action import MoveToPose
+from cpe416_interfaces.action import TurnToAngle
 from lab3.pid import PidController
 
 
-class MoveToPoseServer(Node):
+class TurnToAngleServer(Node):
     def __init__(self):
-        super().__init__("move_to_pose_server")
+        super().__init__("turn_to_angle_server")
         self._action_server = ActionServer(
             self, 
-            MoveToPose, 
-            "move_to_pose", 
+            TurnToAngle, 
+            "turn_to_angle", 
             self.execute_callback
         )
 
         # initialize variables for PID control
-        self.declare_parameter("stop_threshold", 0.05)
+        self.declare_parameter("stop_threshold", 0.005)
         self.init_members()
 
         # initialize PID constants
-        self.declare_parameter("kp_linear", 1.0)
-        self.declare_parameter("ki_linear", 0.0)
-        self.declare_parameter("kd_linear", 0.0)
-        self.declare_parameter("kp_angular", 1.0)
-        self.declare_parameter("ki_angular", 0.0)
-        self.declare_parameter("kd_angular", 0.0)
+        self.declare_parameter("kp", 1.0)
+        self.declare_parameter("ki", 0.0)
+        self.declare_parameter("kd", 0.0)
 
         # initialize pid controller
-        self.u_linear = PidController(
-            Kp = self.get_parameter("kp_linear").get_parameter_value().double_value,
-            Ki = self.get_parameter("ki_linear").get_parameter_value().double_value,
-            Kd = self.get_parameter("kd_linear").get_parameter_value().double_value,
-        )
-
-        self.u_angular = PidController(
-            Kp = self.get_parameter("kp_angular").get_parameter_value().double_value,
-            Ki = self.get_parameter("ki_angular").get_parameter_value().double_value,
-            Kd = self.get_parameter("kd_angular").get_parameter_value().double_value,
+        self.u = PidController(
+            Kp = self.get_parameter("kp").get_parameter_value().double_value,
+            Ki = self.get_parameter("ki").get_parameter_value().double_value,
+            Kd = self.get_parameter("kd").get_parameter_value().double_value,
         )
 
         # get the current pose and create robot controller publisher
@@ -68,23 +63,24 @@ class MoveToPoseServer(Node):
     async def execute_callback(self, goal_handle):
         # set the goal
         goal = goal_handle.request.goal
-        self.get_logger().info(f"Executing goal: ({goal.x}m, {goal.y}m)")
+        self.get_logger().info(f"Executing goal: {goal}deg")
 
+        quat_raw = quaternion_from_euler(0, 0, goal)
         self.target_pose = Pose()
-        self.target_pose.position.x = goal.x
-        self.target_pose.position.y = goal.y
+        self.target_pose.orientation = Quaternion(
+            x=quat_raw[0], y=quat_raw[1], z=quat_raw[2], w=quat_raw[3]
+        )
 
         self.goal_handle_ = goal_handle  # hand off handler to send feedback
-        self.goal_handle_.publish_feedback(MoveToPose.Feedback())
+        self.goal_handle_.publish_feedback(TurnToAngle.Feedback())
 
-        self.get_logger().info("waiting for result...")
         while not self.goal_succeeded_:
             ...  # wait for the goal to succeed
 
         self.get_logger().info("Goal success!")
         goal_handle.succeed()
 
-        result = MoveToPose.Result()
+        result = TurnToAngle.Result()
         result.destination = self.curr_pose_
         self.init_members()  # wipe previous goal's variables
         return result
@@ -96,34 +92,35 @@ class MoveToPoseServer(Node):
             return
 
         self.curr_pose_ = odometry.pose.pose
-
         self.get_logger().info(f"handling odometry: ({self.curr_pose_.position.x}, {self.curr_pose_.position.y})")
 
         # calculate the error from the current pose
-        x_error = self.target_pose.position.x - self.curr_pose_.position.x
-        y_error = self.target_pose.position.y - self.curr_pose_.position.y
-        linear_error = math.sqrt((x_error) ** 2 + (y_error) ** 2)
-        angular_error = math.atan2(y_error, x_error)
+        q_final, q_initial = self.target_pose.orientation, self.curr_pose_.orientation
+        error = euler_from_quaternion(
+            quaternion_multiply(
+                [q_final.x, q_final.y, q_final.z, q_final.w],
+                quaternion_conjugate([q_initial.x, q_initial.y, q_initial.z, q_initial.w]),
+            )
+        )[2]
 
-        if abs(linear_error) < self.threshold_ and abs(angular_error) < self.threshold_:
+        if abs(error) < self.threshold_:
             # if the error is small enough, we have succeeded
             self.cmd_publisher_.publish(Twist())  # make the robot stop
             time.sleep(1)  # wait to release flag AFTER stop is published
-            self.goal_succeeded_ = True              
+            self.goal_succeeded_ = True  
         elif self.goal_handle_ is not None:
             # feed error into PID controller, then move the robot
-            self.cmd_vel_.linear.x = self.u_linear.next(linear_error)
-            self.cmd_vel_.angular.z = self.u_angular.next(angular_error)
+            self.cmd_vel_.angular.z = self.u.next(error)
             self.cmd_publisher_.publish(self.cmd_vel_)
- 
+
             # update the caller with feedback on current state
-            feedback_msg = MoveToPose.Feedback()
+            feedback_msg = TurnToAngle.Feedback()
             feedback_msg.current = self.curr_pose_
             self.goal_handle_.publish_feedback(feedback_msg)
     
 def main(args=None):
     rclpy.init(args=args)
-    node = MoveToPoseServer()
+    node = TurnToAngleServer()
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
     executor.spin()
@@ -132,3 +129,4 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
+

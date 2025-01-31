@@ -4,7 +4,7 @@
   <name>lab3</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="cameron.wolff@proton.me">root</maintainer>
+  <maintainer email="36940948+camwolff02@users.noreply.github.com">root</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -20,8 +20,7 @@
 
   <exec_depend>ros2launch</exec_depend>
 
-
   <export>
-    <build_type>ament_python</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

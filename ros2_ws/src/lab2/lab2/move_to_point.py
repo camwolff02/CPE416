@@ -5,10 +5,6 @@ from turtlesim.msg import Pose
 
 import math
 
-"""
-Proportional controller to command Turtlebot to a position
-"""
-
 
 class MoveToPos(Node):
     def __init__(self):

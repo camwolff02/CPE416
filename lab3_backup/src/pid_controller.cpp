@@ -22,7 +22,7 @@ class PidController : public rclcpp::Node
       publisher_ = this->create_publisher<std_msgs::msg::Float64>("control", 10);
 
       // declare PID parameters
-      this->declare_parameter("P", 1);
+      this->declare_parameter("P", 0.6);
       this->declare_parameter("I", 0);
       this->declare_parameter("D", 0);
 
