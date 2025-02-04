@@ -6,7 +6,7 @@ from rclpy.action import ActionServer
 import rclpy.action
 from rclpy.node import Node
 import rclpy.executors
-from tf_transformations import quaternion_from_euler
+from tf_transformations import quaternion_from_euler, euler_from_quaternion
 
 from geometry_msgs.msg import Twist, Pose, Quaternion
 from nav_msgs.msg import Odometry
@@ -97,13 +97,18 @@ class MoveToPoseServer(Node):
 
         self.curr_pose_ = odometry.pose.pose
 
-        self.get_logger().info(f"handling odometry: ({self.curr_pose_.position.x}, {self.curr_pose_.position.y})")
 
         # calculate the error from the current pose
         x_error = self.target_pose.position.x - self.curr_pose_.position.x
         y_error = self.target_pose.position.y - self.curr_pose_.position.y
+        q = self.curr_pose_.orientation
+        curr_angle = euler_from_quaternion([q.x, q.y, q.z, q.w])[2]
+        target_angle = math.atan2(y_error, x_error)
+
         linear_error = math.sqrt((x_error) ** 2 + (y_error) ** 2)
-        angular_error = math.atan2(y_error, x_error)
+        angular_error = target_angle - curr_angle
+
+        self.get_logger().info(f"angle: {curr_angle} | Error: linear {linear_error} | angular {angular_error}")
 
         if abs(linear_error) < self.threshold_ and abs(angular_error) < self.threshold_:
             # if the error is small enough, we have succeeded

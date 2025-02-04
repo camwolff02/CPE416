@@ -80,8 +80,11 @@ def main(args=None):
     # Create node and queue server requests
     draw_square = DrawSquare()
     current_goal = Pose2D()
-    turn_goal = 0
-    side_len = 5
+    turn_goal = 0.0
+    side_len = 5.0
+
+    current_goal.x = side_len
+    turn_goal = math.pi / 2
 
     # first line
     current_goal.x += side_len
